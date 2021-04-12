@@ -32,16 +32,14 @@ private int port;
 
 	@Test
 	public void submitCorrectOrderProcessedWithTotal() throws Exception {
-		Order order = new Order(List.of("apple", "apple", "orange", "orange", "pickle"));
+		Order order = new Order(List.of("apple", "apple", "orange", "orange", "orange"));
 		String url = "http://localhost:" + port + "/orders";
 		URI uri = new URI(url);
 
 		ResponseEntity<OrderCheckout> response = this.restTemplate.postForEntity(url, order, OrderCheckout.class);
-
-		assertEquals(HttpStatus.CREATED, response.getStatusCode());
-		assertTrue(response.getBody().getItems().containsKey("apple"));
-		assertFalse(response.getBody().getItems().containsKey("pickle"));
-		assertEquals(new BigDecimal("1.70"), response.getBody().getTotal());
+		assertFalse(true);
+		//assertEquals(HttpStatus.CREATED, response.getStatusCode());
+		//assertEquals(new BigDecimal("1.10"), response.getBody().getTotal());
 	}
 
 }
