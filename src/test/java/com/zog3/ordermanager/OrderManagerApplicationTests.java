@@ -31,14 +31,37 @@ private int port;
 	}
 
 	@Test
-	public void submitCorrectOrderProcessedWithTotal() throws Exception {
-		Order order = new Order(List.of("apple", "apple", "orange", "orange", "orange", "apple", "orange", "apple"));
+	public void successfullySubmitOrderRequest() throws Exception {
+		Order order = new Order(List.of("orange"));
 		String url = "http://localhost:" + port + "/orders";
 		URI uri = new URI(url);
 
 		ResponseEntity<OrderCheckout> response = this.restTemplate.postForEntity(url, order, OrderCheckout.class);
 		assertEquals(HttpStatus.CREATED, response.getStatusCode());
-		assertEquals(new BigDecimal("1.95"), response.getBody().getTotal());
+	}
+
+	@Test
+	public void submitCorrectOrderProcessedWithTotal() throws Exception {
+		//The request object does not communicate if the simple offer is active. The 'deals' boolean needs to be
+		//toggled manually and the price in this test adjusted to match.
+		Order order = new Order(List.of("orange", "orange", "orange", "orange", "orange", "orange", "orange", "orange"));
+		String url = "http://localhost:" + port + "/orders";
+		URI uri = new URI(url);
+
+		ResponseEntity<OrderCheckout> response = this.restTemplate.postForEntity(url, order, OrderCheckout.class);
+		assertEquals(new BigDecimal("1.50"), response.getBody().getTotal());
+	}
+
+	@Test
+	public void serviceRejectsItemsWithNoPrice() throws Exception {
+		//The request object does not communicate if the simple offer is active. The 'deals' boolean needs to be
+		//toggled manually and the price in this test adjusted to match.
+		Order order = new Order(List.of("orange", "orange", "apple", "orange", "apple", "orange", "pickle", "orange"));
+		String url = "http://localhost:" + port + "/orders";
+		URI uri = new URI(url);
+
+		ResponseEntity<OrderCheckout> response = this.restTemplate.postForEntity(url, order, OrderCheckout.class);
+		assertFalse(response.getBody().toString().contains("pickle"), response.getBody().getTotal().toString());
 	}
 
 }
