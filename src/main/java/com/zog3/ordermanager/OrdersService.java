@@ -1,5 +1,7 @@
 package com.zog3.ordermanager;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -7,13 +9,18 @@ import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 import java.math.BigDecimal;
+import java.util.logging.Logger;
 
 @Service
 public class OrdersService {
+    private static final Logger log = Logger.getLogger("OrdersService");
     private Map<String, BigDecimal> prices = new HashMap<>();
     private Map<String, BigDecimal> discounts = new HashMap<>();
     private Map<String, Integer> discountThreshold = new HashMap<>();
     private Boolean deals = true;
+
+    @Autowired
+    private ApplicationEventPublisher publisher;
 
     @PostConstruct
     private void foo() {
@@ -55,6 +62,7 @@ public class OrdersService {
 
         OrderCheckout orderCheckout = new OrderCheckout(items, total);
         System.out.println(orderCheckout.toString());
+        publisher.publishEvent(new OrderCheckoutEvent(this, orderCheckout.toString()));
         return orderCheckout;
     }
 
