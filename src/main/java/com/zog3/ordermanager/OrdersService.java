@@ -17,7 +17,8 @@ public class OrdersService {
     private Map<String, BigDecimal> prices = new HashMap<>();
     private Map<String, BigDecimal> discounts = new HashMap<>();
     private Map<String, Integer> discountThreshold = new HashMap<>();
-    private Boolean deals = true;
+    private Map<String, Integer> productStock = new HashMap<>();
+    private Boolean deals = false;
 
     @Autowired
     private ApplicationEventPublisher publisher;
@@ -35,9 +36,13 @@ public class OrdersService {
         //Modulus values establishing discount threshold
         discountThreshold.put("apple", 2);
         discountThreshold.put("orange", 3);
+
+        //product stock quantities
+        productStock.put("apple", 5);
+        productStock.put("orange", 5);
     }
 
-    public OrderCheckout processOrder(Order request) {
+    public OrderCheckout processOrder(Order request) throws Exception {
         Map<String, Integer> items = new HashMap<>();
         BigDecimal total = BigDecimal.ZERO.setScale(2);
 
@@ -57,23 +62,43 @@ public class OrdersService {
                 );
 
         for (String item : items.keySet()) {
-            total = total.add(computeSubtotal(item, items));
+            if (checkProductStock(item, items)) {
+                total = total.add(computeSubtotal(item, items));
+            } else {
+                publisher.publishEvent(new OrderCheckoutEvent(this, "Insufficient stock of " + item));
+                throw new Exception("Insufficient inventory");
+            }
         }
-
+        updateStock(items);
         OrderCheckout orderCheckout = new OrderCheckout(items, total);
         System.out.println(orderCheckout.toString());
         publisher.publishEvent(new OrderCheckoutEvent(this, orderCheckout.toString()));
+
         return orderCheckout;
+    }
+
+    private Boolean checkProductStock(String item, Map<String, Integer> items) {
+        Boolean orderIsValid = productStock.get(item) >= items.get(item);
+        return orderIsValid;
+    }
+
+    private void updateStock(Map<String, Integer> items) {
+        for (String item : items.keySet()) {
+            productStock.replace(item, productStock.get(item) - items.get(item));
+            System.out.println("Remaining stock for " + item + ": " + productStock.get(item));
+        }
     }
 
     private BigDecimal computeSubtotal(String item, Map<String, Integer> items) {
         BigDecimal itemTotal;
         if (deals) {
-            BigDecimal remainder = BigDecimal.valueOf(items.get(item)).remainder(BigDecimal.valueOf(discountThreshold.get(item)));
-            itemTotal = prices.get(item).multiply(BigDecimal.valueOf(items.get(item)).subtract(remainder)).multiply(discounts.get(item))//
+            BigDecimal remainder = BigDecimal.valueOf(items.get(item))//
+                    .remainder(BigDecimal.valueOf(discountThreshold.get(item)));
+            itemTotal = prices.get(item).multiply(BigDecimal.valueOf(items.get(item))//
+                    .subtract(remainder)).multiply(discounts.get(item))//
                     .add(remainder.multiply(prices.get(item))).setScale(2, RoundingMode.FLOOR);
         } else {
-            itemTotal = prices.get(item).multiply(BigDecimal.valueOf(items.get(item)));
+            itemTotal = prices.get(item).multiply(BigDecimal.valueOf(items.get(item))).setScale(2, RoundingMode.FLOOR);
         }
         return itemTotal;
     }

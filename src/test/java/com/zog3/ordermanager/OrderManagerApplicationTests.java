@@ -44,12 +44,13 @@ private int port;
 	public void submitCorrectOrderProcessedWithTotal() throws Exception {
 		//The request object does not communicate if the simple offer is active. The 'deals' boolean needs to be
 		//toggled manually and the price in this test adjusted to match.
-		Order order = new Order(List.of("orange", "orange", "orange", "orange", "orange", "orange", "orange", "orange"));
+		Order order = new Order(List.of("orange", "orange", "orange", "orange", "orange",//
+				"apple", "apple", "apple", "apple", "apple"));
 		String url = "http://localhost:" + port + "/orders";
 		URI uri = new URI(url);
 
 		ResponseEntity<OrderCheckout> response = this.restTemplate.postForEntity(url, order, OrderCheckout.class);
-		assertEquals(new BigDecimal("1.50"), response.getBody().getTotal());
+		assertEquals(new BigDecimal("4.25"), response.getBody().getTotal());
 	}
 
 	@Test
@@ -62,6 +63,20 @@ private int port;
 
 		ResponseEntity<OrderCheckout> response = this.restTemplate.postForEntity(url, order, OrderCheckout.class);
 		assertFalse(response.getBody().toString().contains("pickle"), response.getBody().getTotal().toString());
+	}
+
+	@Test
+	public void multipleOrdersUpdateStock() throws Exception {
+		//The request object does not communicate if the simple offer is active. The 'deals' boolean needs to be
+		//toggled manually and the price in this test adjusted to match.
+		Order order = new Order(List.of("orange", "apple", "apple"));
+		String url = "http://localhost:" + port + "/orders";
+		URI uri = new URI(url);
+
+		ResponseEntity<OrderCheckout> firstResponse = this.restTemplate.postForEntity(url, order, OrderCheckout.class);
+		ResponseEntity<OrderCheckout> secondResponse = this.restTemplate.postForEntity(url, order, OrderCheckout.class);
+		ResponseEntity<OrderCheckout> thirdResponse = this.restTemplate.postForEntity(url, order, OrderCheckout.class);
+		assertEquals(HttpStatus.BAD_REQUEST, thirdResponse.getStatusCode());
 	}
 
 }
