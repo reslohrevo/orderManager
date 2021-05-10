@@ -12,4 +12,11 @@ public class OrderCheckoutEvent extends ApplicationEvent {
     public String getMessage() {
         return message;
     }
+
+    @Override
+    public String toString() {
+        return "OrderCheckoutEvent{" +
+                "message='" + message + '\'' +
+                '}';
+    }
 }

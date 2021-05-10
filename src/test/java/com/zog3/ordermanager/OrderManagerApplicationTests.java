@@ -57,7 +57,7 @@ private int port;
 	public void serviceRejectsItemsWithNoPrice() throws Exception {
 		//The request object does not communicate if the simple offer is active. The 'deals' boolean needs to be
 		//toggled manually and the price in this test adjusted to match.
-		Order order = new Order(List.of("orange", "orange", "apple", "orange", "apple", "orange", "pickle", "orange"));
+		Order order = new Order(List.of("orange", "orange", "apple", "apple", "pickle", "orange"));
 		String url = "http://localhost:" + port + "/orders";
 		URI uri = new URI(url);
 
